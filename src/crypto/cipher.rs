@@ -1,5 +1,5 @@
 use aes::Aes256;
-use cipher::{BlockDecrypt, KeyInit, generic_array::GenericArray};
+use cipher::{BlockDecrypt, BlockEncrypt, KeyInit, generic_array::GenericArray};
 
 use super::keys::GtaKeys;
 
@@ -10,6 +10,17 @@ pub fn decrypt_aes(data: &[u8], key: &[u8; 32]) -> Vec<u8> {
     for i in 0..block_count {
         let block = GenericArray::from_mut_slice(&mut buf[i * 16..(i + 1) * 16]);
         cipher.decrypt_block(block);
+    }
+    buf
+}
+
+pub fn encrypt_aes(data: &[u8], key: &[u8; 32]) -> Vec<u8> {
+    let cipher = Aes256::new(GenericArray::from_slice(key));
+    let mut buf = data.to_vec();
+    let block_count = buf.len() / 16;
+    for i in 0..block_count {
+        let block = GenericArray::from_mut_slice(&mut buf[i * 16..(i + 1) * 16]);
+        cipher.encrypt_block(block);
     }
     buf
 }
