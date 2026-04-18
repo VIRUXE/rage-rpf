@@ -11,5 +11,5 @@ pub use archive::{RpfArchive, RpfEntry, RpfEntryKind, RpfEncryption, RpfFile, Rp
                   RPF7_MAGIC, RPF8_MAGIC, RSC7_MAGIC, RSC8_MAGIC, IMG3_MAGIC};
 pub use crypto::keys::GtaKeys;
 pub use tree::{DirNode, FileRef, build_directory_tree, list_all_files};
-pub use writer::RpfBuilder;
+pub use writer::{RpfBuilder, rage_joaat};
 pub use ytd::{parse_ytd, TextureFormat, YtdTexture};

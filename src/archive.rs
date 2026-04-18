@@ -830,7 +830,7 @@ fn parse_rpf6_entries(
         } else {
             let byte_offset      = (((dword8 & 0x7FFFFFFF) as u64) << 3) as u32;
             let on_disk_size     = dword4 & 0x7FFFFFFF;
-            let uncompressed_size = dwordc & 0x3FFFFFFF;
+            let uncompressed_size = if is_compressed { dwordc & 0x3FFFFFFF } else { on_disk_size };
             let file_size        = if is_compressed { on_disk_size } else { 0 };
             RpfEntryKind::BinaryFile {
                 file_offset: byte_offset,
