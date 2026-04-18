@@ -1,11 +1,11 @@
 [package]
-name = "rage-rpf"
-version = "0.5.1"
+name = "rpf-archive"
+version = "0.6.0"
 edition = "2021"
-description = "RAGE Package File (RPF) archive parser and decryptor for GTA V and related titles"
+description = "Rockstar Package File (RPF) archive library — read and write RPF0–RPF8 and IMG3 across GTA, RDR, and related titles"
 license = "MIT"
-repository = "https://github.com/VIRUXE/rage-rpf"
-keywords = ["gta", "rage", "rpf", "gta5", "fivem"]
+repository = "https://github.com/VIRUXE/rpf-rs"
+keywords = ["rpf", "gta", "rdr", "rockstar", "archive"]
 categories = ["parsing", "game-development"]
 
 [dependencies]
