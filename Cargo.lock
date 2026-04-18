@@ -140,8 +140,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "rage-rpf"
-version = "0.5.0"
+name = "rpf-archive"
+version = "0.6.0"
 dependencies = [
  "aes",
  "anyhow",
