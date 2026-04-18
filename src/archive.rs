@@ -706,7 +706,8 @@ fn parse_rpf2_entries(
                 entries_count: dwordc & 0x3FFFFFFF,
             }
         } else if is_resource {
-            let byte_offset    = dword8 & 0x7FFFFF00;
+            let raw_offset     = dword8 & 0x7FFFFF00; // low byte is resource type, strip it
+            let byte_offset    = if version == RpfVersion::V4 { raw_offset * 8 } else { raw_offset };
             let resource_flags = dwordc & 0x3FFFFFFF;
             let virt_size = (resource_flags & 0x7FF) << (((resource_flags >> 11) & 0xF) + 8);
             let phys_size = ((resource_flags >> 15) & 0x7FF) << (((resource_flags >> 26) & 0xF) + 8);
@@ -720,7 +721,7 @@ fn parse_rpf2_entries(
         } else {
             let raw_offset    = dword8 & 0x7FFFFFFF;
             let file_offset   = if version == RpfVersion::V4 { raw_offset * 8 } else { raw_offset };
-            let disk_size     = dwordc & 0x3FFFFFFF;
+            let disk_size     = dwordc & 0x00FFFFFF; // bits 24-29 unused, only 24 bits for size
             let file_size     = if is_compressed { disk_size } else { 0 };
             RpfEntryKind::BinaryFile {
                 file_offset,

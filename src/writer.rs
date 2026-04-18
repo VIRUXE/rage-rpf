@@ -467,16 +467,19 @@ impl RpfBuilder {
         // File data starts after entries, aligned to 8 bytes (offsets stored as /8)
         let data_start    = align_up(entries_end, 8);
 
-        // Assign byte offsets (multiples of 8)
+        // Assign byte offsets; files >=128KB use 2048-byte alignment, smaller use 8-byte
         let mut current  = data_start;
         let mut file_idx = 0usize;
         for entry in flat.iter_mut() {
             match &mut entry.kind {
                 FlatKind::Binary   { file_offset, file_size, .. }
                 | FlatKind::Resource { file_offset, file_size, .. } => {
+                    let flen = file_data[file_idx].len();
+                    let align = if flen >= 131072 { 2048 } else { 8 };
+                    current      = align_up(current, align);
                     *file_offset = current as u32;
-                    *file_size   = file_data[file_idx].len() as u32;
-                    current      = align_up(current + file_data[file_idx].len(), 8);
+                    *file_size   = flen as u32;
+                    current     += flen;
                     file_idx    += 1;
                 }
                 FlatKind::Directory { .. } => {}
@@ -534,8 +537,8 @@ impl RpfBuilder {
 
         // Assemble
         let mut out = Vec::new();
-        // Header (big-endian): Magic + EntryCount + DebugDataOffset + DecryptionTag(0)
-        out.extend_from_slice(&RPF6_MAGIC.to_be_bytes());
+        // Magic bytes are always the ASCII "RPF6" sequence regardless of file endianness
+        out.extend_from_slice(&RPF6_MAGIC.to_le_bytes());
         out.extend_from_slice(&(entry_count as u32).to_be_bytes());
         out.extend_from_slice(&debug_data_offset.to_be_bytes());
         out.extend_from_slice(&0u32.to_be_bytes()); // unencrypted
@@ -547,9 +550,11 @@ impl RpfBuilder {
         for entry in &flat {
             match &entry.kind {
                 FlatKind::Binary { file_size: _, .. } | FlatKind::Resource { file_size: _, .. } => {
+                    let flen = file_data[file_idx].len();
+                    let align = if flen >= 131072 { 2048 } else { 8 };
+                    let pre_pad = align_up(out.len(), align) - out.len();
+                    out.resize(out.len() + pre_pad, 0);
                     out.extend_from_slice(&file_data[file_idx]);
-                    let pad = align_up(out.len(), 8) - out.len();
-                    out.resize(out.len() + pad, 0);
                     file_idx += 1;
                 }
                 FlatKind::Directory { .. } => {}
@@ -707,23 +712,13 @@ impl RpfBuilder {
         }
     }
 
-    /// Recursively collect all files (name = full relative path).
-    fn collect_files_flat(dir: &BuildDir, prefix: &str, out: &mut Vec<(String, Vec<u8>)>) {
+    /// Recursively collect all files with just their filename (IMG3 is flat, no directories).
+    fn collect_files_flat(dir: &BuildDir, _prefix: &str, out: &mut Vec<(String, Vec<u8>)>) {
         for f in &dir.files {
-            let name = if prefix.is_empty() {
-                f.name.clone()
-            } else {
-                format!("{}/{}", prefix, f.name)
-            };
-            out.push((name, f.data.clone()));
+            out.push((f.name.clone(), f.data.clone()));
         }
         for sub in &dir.subdirs {
-            let sub_prefix = if prefix.is_empty() {
-                sub.name.clone()
-            } else {
-                format!("{}/{}", prefix, sub.name)
-            };
-            Self::collect_files_flat(sub, &sub_prefix, out);
+            Self::collect_files_flat(sub, "", out);
         }
     }
 }
